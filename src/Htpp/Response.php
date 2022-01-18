@@ -25,9 +25,9 @@ class Response
         $this->content = $content;
     }
 
-    public function getHeaders(): array
+    public function getHeaders(string $headersName): ?string
     {
-        return $this->headers;
+        return $this->headers[$headersName] ?? null;
     }
 
     public function setHeaders(array $headers)

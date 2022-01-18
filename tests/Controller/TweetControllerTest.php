@@ -29,8 +29,7 @@ class TweetControllerTest extends TestCase
 
         //Alors je m'attends à être rediriger vers /
         $this->assertEquals(302, $response->getStatusCode());
-        $this->assertArrayHasKey("Location" , $response->getHeaders());
-        $this->assertEquals("/", $response->getHeaders()["Location"]);
+        $this->assertEquals("/", $response->getHeaders("Location"));
 
         //Et je m'attends à trouver  un tweet dans la base de données
         $result = $pdo->query('SELECT t.* FROM tweet AS t');
