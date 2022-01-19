@@ -8,7 +8,8 @@ class HelloController
 {
     public function hello(): Response
     {
-        $name = $_GET["name"];
+        //Donne dans le tableau GET le "name" et si null alors donne "everbody"
+        $name = $_GET["name"] ?? "everybody";
 
         return new Response("Hello $name");
     }
