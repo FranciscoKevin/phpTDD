@@ -3,7 +3,9 @@
 namespace App\Tests\Controller;
 
 use App\Controller\TweetController;
+use App\Htpp\Request;
 use App\Model\TweetModel;
+use App\Validation\RequestValidator;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -29,19 +31,22 @@ class TweetControllerTest extends TestCase
         //Instance du Model
         $this->tweetModel = new TweetModel($this->pdo);
         //Instance du Controller
-        $this->controller = new TweetController($this->tweetModel);
-
-        $_POST = [];
+        $this->controller = new TweetController(
+            $this->tweetModel,
+            new RequestValidator
+        );
     }
 
     public function testUserCanSaveTweet()
     {
         //Etant donné une requete POST vers /tweet.php et que les parametres "content" et "author" sont présents
-        $_POST["author"] = "Kevin";
-        $_POST["content"] = "Mon premier tweet";
+        $request = new Request([
+           "author" => "Kevin",
+           "content" => "Mon premier tweet"
+        ]);
 
         //Quand mon controller prend la main
-        $response = $this->controller->saveTweet();
+        $response = $this->controller->saveTweet($request);
 
         //Alors je m'attends à être rediriger vers /
         $this->assertEquals(302, $response->getStatusCode());
@@ -57,21 +62,36 @@ class TweetControllerTest extends TestCase
         $this->assertEquals("Mon premier tweet", $data["content"]);
     }
 
-    public function testUserCantSaveTweetWithoutAuthor()
+    public function missingFieldsProvider()
     {
-        $_POST["content"] = "Tweet test";
-        $response = $this->controller->saveTweet();
-
-        $this->assertEquals(400, $response->getStatusCode());
-        $this->assertEquals("Le champ author est manquant", $response->getContent());
+        return [
+            [
+                ["content" => "Test tweet"],
+                "Le champ author est manquant"
+            ],
+            [
+                ["author" => "Kevin"],
+                "Le champ content est manquant"
+            ],
+            [
+                [],
+                "Les champs author, content sont manquants"
+            ]
+        ];
     }
 
-    public function testUserCantSaveTweetWithoutContent()
+    /**
+     * @dataProvider missingFieldsProvider
+     * @param array $postData
+     * @param string $errorMessage
+     */
+    public function testTweetFieldsAreMissing($postData, $errorMessage)
     {
-        $_POST["author"] = "Kevin";
-        $response = $this->controller->saveTweet();
+        $request = new Request($postData) ;
+
+        $response = $this->controller->saveTweet($request);
 
         $this->assertEquals(400, $response->getStatusCode());
-        $this->assertEquals("Le champ content est manquant", $response->getContent());
+        $this->assertEquals($errorMessage, $response->getContent());
     }
 }
